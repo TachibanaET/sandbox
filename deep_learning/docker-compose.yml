@@ -1,0 +1,28 @@
+version: '3'
+services:
+  deep-learning-env:
+    container_name: deep-learning-env
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
+      args:
+        UID: $UID
+        GID: $GID
+        UNAME: $UNAME
+        PROXY: $PROXY
+
+    user: $UID:$GID
+    working_dir: /home/$UNAME
+
+    ipc: host
+    volumes:
+      - ./source:/home/$UNAME/
+
+    tty: true
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu, utility, compute ]
