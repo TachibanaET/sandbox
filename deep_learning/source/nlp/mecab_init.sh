@@ -9,3 +9,4 @@ sudo ./bin/install-mecab-ipadic-neologd -n -y
 # echo dicdir = `mecab-config --dicdir`"/mecab-ipadic-neologd" > /etc/mecabrc 
 # sudo cp /etc/mecabrc /usr/local/etc
 cd ..
+sudo rm -rf mecab-ipadic-neologd

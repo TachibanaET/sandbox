@@ -4,3 +4,8 @@
 mecab-ipadic-neologd
 .local
 .cache
+__pycache__
+.config
+lightning_logs/
+.*_history
+models/

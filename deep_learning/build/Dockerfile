@@ -1,5 +1,6 @@
 # https://catalog.ngc.nvidia.com/orgs/partners/teams/gridai/containers/pytorch-lightning
-FROM nvcr.io/partners/gridai/pytorch-lightning:v1.3.7
+# FROM nvcr.io/partners/gridai/pytorch-lightning:v1.4.0
+FROM pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.10
 LABEL maintainer="TachibanaET <https://github.com/TachibanaET>"
 
 # Install dependencies
@@ -22,7 +23,6 @@ RUN apt -y install vim \
     tzdata
 
 
-
 # Create user & add to sudoers
 ARG UID
 ARG GID
@@ -43,4 +43,3 @@ COPY ./set_volume_permission.sh /home/${UNAME}/
 RUN chmod +x /home/${UNAME}/set_volume_permission.sh
 
 RUN /home/${UNAME}/set_volume_permission.sh
-
