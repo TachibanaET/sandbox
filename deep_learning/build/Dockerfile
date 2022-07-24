@@ -43,3 +43,7 @@ COPY ./set_volume_permission.sh /home/${UNAME}/
 RUN chmod +x /home/${UNAME}/set_volume_permission.sh
 
 RUN /home/${UNAME}/set_volume_permission.sh
+
+# add ENV variables
+ARG WANDB_API_KEY
+ENV WANDB_API_KEY ${WANDB_API_KEY}

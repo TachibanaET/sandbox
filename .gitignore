@@ -9,3 +9,7 @@ __pycache__
 lightning_logs/
 .*_history
 models/
+logging/
+checkpoints/
+wandb/
+log/

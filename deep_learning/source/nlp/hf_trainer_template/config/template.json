@@ -1,0 +1,40 @@
+{
+    "tag": "template",
+    "wandb_project": "nlp-project-template",
+    "model_args": {
+        "model_name_or_path": "t5-small"
+    },
+    "dataset_maker_args": {
+        "create_dataset": true,
+        "input_max_len": 128,
+        "target_max_len": 16,
+        "data_paths": [
+            "./data/SPAM_preprocessed.pkl"
+        ],
+        "inputs_col": "Message",
+        "targets_col": "Category",
+        "save_path_prefix": "./data/dataset"
+    },
+    "data_args": {
+        "train_file": "./data/dataset/train.pkl",
+        "validation_file": "./data/dataset/valid.pkl"
+    },
+    "training_args": {
+        "output_dir": "./models",
+        "overwrite_output_dir": true,
+        "do_train": true,
+        "do_eval": true,
+        "evaluation_strategy": "steps",
+        "per_device_train_batch_size": 8,
+        "per_device_eval_batch_size": 8,
+        "num_train_epochs": 10,
+        "logging_strategy": "steps",
+        "logging_steps": 100,
+        "logging_first_step": true,
+        "save_strategy": "steps",
+        "save_steps": 100,
+        "save_total_limit": 10,
+        "report_to": "wandb"
+    },
+    "description": "template config file for nlp-project-template"
+}

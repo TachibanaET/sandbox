@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -7,6 +8,9 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 from data_module import CustomDataModule
 from module import GenerateModule
+from utils import get_callbacks, get_logger
+
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 
 def setup_data_module(
@@ -18,14 +22,15 @@ def setup_data_module(
     df = pd.read_csv(data_path, skiprows=0, header=1)
     df = df.dropna()
 
+    inputs_col = 'Message'
+    outputs_col = 'Category'
+
+    df[inputs_col] = df[inputs_col].apply(lambda x: f'Classification: {x}')
+
     train_df = df.iloc[:int(len(df) * 0.8)]
     valid_df = df.iloc[int(len(df) * 0.8):int(len(df) * 0.9)]
     test_df = df.iloc[int(len(df) * 0.9):]
 
-    inputs_col = 'Message'
-    outputs_col = 'Category'
-
-    # print(df)
     data_module_cfg = {
         'train': {
             'inputs': train_df[inputs_col].to_list(),
@@ -43,8 +48,10 @@ def setup_data_module(
         'max_length': max_length,
         'tokenizer': tokenizer,
     }
+    # print(data_module_cfg)
     data_module = CustomDataModule(data_module_cfg)
     data_module.setup('fit')
+    data_module.show_example()
 
     # for debug
     print(
@@ -56,15 +63,16 @@ def setup_data_module(
 
 
 def main():
-    USE_GPU = torch.cuda.is_available()
+
+    exp_name = '20220723_test_v2'
 
     base_cfg = dict(
         model_name_or_path='t5-small',
         tokenizer_name_or_path='t5-small',
-        batch_size=32,
+        batch_size=64,
         max_length=128,
         fp_16=True,
-        model_save_path='./models/'
+        model_save_path=f'./models/{exp_name}'
     )
 
     pl.seed_everything(42)
@@ -82,15 +90,15 @@ def main():
     )
 
     module_cfg = dict(
-        learning_rate=3e-4,
-        weight_decay=0.0,
+        learning_rate=1e-3,
+        weight_decay=0.01,
         adam_epsilon=1e-8,
         warmup_steps=0,
-        gradient_accumulation_steps=1,
-        early_stop_callback=False,
-        fp_16=False,
-        opt_level='O1',
-        max_grad_norm=1.0,
+        # gradient_accumulation_steps=1,
+        # early_stop_callback=False,
+        # fp_16=False,
+        # opt_level='O1',
+        # max_grad_norm=1.0,
         seed=42,
         train_batch_size=base_cfg['batch_size'],
         eval_batch_size=base_cfg['batch_size'],
@@ -105,13 +113,34 @@ def main():
     module_hparams = argparse.Namespace(**module_cfg)
     module = GenerateModule(module_hparams)
 
+    model = AutoModelForSeq2SeqLM.from_pretrained('t5-small')
+
+    module.setup_model(model)
+    module.setup_tokenizer(tokenizer)
+
+    logger_cfg = argparse.Namespace(**dict(
+        logger_name='wandb',
+        project_name='t5-small',
+        run_name=exp_name,
+        save_dir='./logging'
+    ))
+
+    # find description of the "accelerator" parameters in the documentation :
+    # https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/multi_gpu.html#distributed-modes
     train_cfg = dict(
-        accumulate_grad_batches=module_cfg['gradient_accumulation_steps'],
-        num_devices=-1,
-        # find description of the "accelerator" parameters in the documentation :
-        # https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/multi_gpu.html#distributed-modes
+        accelerator='gpu',
+        devices=-1,
         strategy="dp",
-        max_epochs=1
+        max_epochs=10,
+        logger=get_logger(logger_cfg),
+        callbacks=get_callbacks(
+            monitor='val_loss',
+            min_delta=0.005,
+            patience=10,
+            mode='min',
+            checkpoint_path='./checkpoints',
+            checkpoint_name='{epoch}',
+        )
     )
     trainer = pl.Trainer(**train_cfg)
     print('start fit module')

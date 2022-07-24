@@ -10,13 +10,14 @@ services:
         GID: $GID
         UNAME: $UNAME
         PROXY: $PROXY
+        WANDB_API_KEY: $WANDB_API_KEY
 
     user: $UID:$GID
-    working_dir: /home/$UNAME
+    working_dir: /home/$UNAME/workspace
 
     ipc: host
     volumes:
-      - ./source:/home/$UNAME/
+      - ./source:/home/$UNAME/workspace
 
     tty: true
     restart: always

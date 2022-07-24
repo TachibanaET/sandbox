@@ -8,37 +8,46 @@ class GenerateModule(pl.LightningModule):
     def __init__(self, hparams):
         super().__init__()
         self.save_hyperparameters(hparams)
-        # self.save_hyperparameters()
 
-        # self.hparams = hparams
-        # self.model = hparams.model
-        # self.tokenizer = hparams.tokenizer
+    def setup_model(self, model):
+        self.model = model
+        print('- setup model ... done')
 
-        self.model = AutoModelForSeq2SeqLM.from_pretrained('t5-small')
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            't5-small',
-            model_max_length=self.hparams.max_length,
-            is_fast=True
-        )
+    def setup_tokenizer(self, tokenizer):
+        self.tokenizer = tokenizer
+        print('- setup tokenizer ... done')
 
     def forward(self, **inputs):
         return self.model(**inputs)
 
+    def _step(self, batch):
+        # All labels set to -100 are ignored (masked),
+        # the loss is only computed for labels in [0, ..., config.vocab_size]
+
+        labels = batch['labels']
+        labels[labels[:, :] == self.tokenizer.pad_token_id] = -100
+        batch['labels'] = labels
+
+        return self(**batch)[0]
+
     def training_step(self, batch, batch_idx):
-        outputs = self(**batch)
-        loss = outputs[0]
+
+        loss = self._step(batch)
         self.log('train_loss', loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        outputs = self(**batch)
-        loss = outputs[0]
+        # outputs = self(**batch)
+        # loss = outputs[0]
+        loss = self._step(batch)
+
         self.log('val_loss', loss, prog_bar=True)
         return loss
 
     def test_step(self, batch, batch_idx):
-        outputs = self(**batch)
-        loss = outputs[0]
+        # outputs = self(**batch)
+        # loss = outputs[0]
+        loss = self._step(batch)
         self.log('test_loss', loss, prog_bar=True)
         return loss
 
@@ -72,13 +81,13 @@ class GenerateModule(pl.LightningModule):
             lr=self.hparams.learning_rate,
             eps=self.hparams.adam_epsilon)
 
-        scheduler = get_linear_schedule_with_warmup(
+        _scheduler = get_linear_schedule_with_warmup(
             optimizer,
             num_warmup_steps=self.hparams.warmup_steps,
             num_training_steps=self.total_steps,
         )
         scheduler = {
-            "scheduler": scheduler,
+            "scheduler": _scheduler,
             "interval": "step",
             "frequency": 1}
         print('- configure optimizer ... done')

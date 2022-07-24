@@ -52,9 +52,19 @@ class CustomDataset(Dataset):
             # output_ids=dec['input_ids'],
             # output_mask=dec['attention_mask'],
             labels=dec['input_ids'].squeeze(),
+            decoder_attention_mask=dec['attention_mask'].squeeze(),
             # output_mask=dec['attention_mask'],
 
         )
+
+    def show_example(self):
+        idx = 0
+        print('----- show example -----')
+        print('input : ', self.inputs[idx])
+        print('output : ', self.outputs[idx])
+        print('input_ids : ', self.tokenizer.encode(self.inputs[idx]))
+        print('output_ids : ', self.tokenizer.encode(self.outputs[idx]))
+        print('----- show example end -----')
 
 
 class CustomDataModule(pl.LightningDataModule):
@@ -111,3 +121,6 @@ class CustomDataModule(pl.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=os.cpu_count())
+
+    def show_example(self):
+        self.train_dataset.show_example()
