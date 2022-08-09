@@ -1,5 +1,3 @@
-# https://catalog.ngc.nvidia.com/orgs/partners/teams/gridai/containers/pytorch-lightning
-# FROM nvcr.io/partners/gridai/pytorch-lightning:v1.4.0
 FROM pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.10
 LABEL maintainer="TachibanaET <https://github.com/TachibanaET>"
 
