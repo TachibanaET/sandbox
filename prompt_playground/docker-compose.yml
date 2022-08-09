@@ -1,0 +1,51 @@
+version: '3'
+services:
+  prompt-playground-frontend:
+    container_name: prompt-playground-frontend
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+      args:
+        UID: $UID
+        GID: $GID
+        UNAME: $UNAME
+        PROXY: $PROXY
+
+    user: $UID:$GID
+    working_dir: /home/$UNAME/workspace/source
+    volumes:
+      - ./frontend:/home/$UNAME/workspace
+    ports:
+      - "80:80"
+    ipc: host
+    tty: true
+
+  prompt-playground-backend:
+    container_name: prompt-playground-backend
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+      args:
+        UID: $UID
+        GID: $GID
+        UNAME: $UNAME
+        PROXY: $PROXY
+
+    user: $UID:$GID
+    working_dir: /home/$UNAME/workspace/source
+
+    ipc: host
+    volumes:
+      - ./backend:/home/$UNAME/workspace
+
+    ports:
+      - "3000:3000"
+
+    tty: true
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu, utility, compute ]
